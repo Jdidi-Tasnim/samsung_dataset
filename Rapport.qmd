@@ -1,0 +1,308 @@
+---
+title: "Les actions de SAMSUNG entre 2000 et début 2024"
+format: pdf
+editor: visual
+author : Jdidi Tasnime & Hamouda Oussema
+---
+
+## Introduction
+
+Ce rapport nous invite à explorer le jeu de données Samsung. Nous utiliserons des techniques de visualisation, des méthodes d'analyse et des cadres d'interprétation pour découvrir des informations précieuses et acquérir une compréhension approfondie des modèles et tendances sous-jacents.
+
+## Dataset
+
+dataset montre un tableau de données boursiéres.chaque ligne représente une journée de bourse unique, les colonnes contiennet des informations sur le prix et le volume de l'action pour cette journée.
+
+Date–\>la date de la journée de bourse
+
+Open –\>le prix de l'action à l'ouverture de la journée de bourse
+
+High –\>Le prix le plus élevé atteint par l'action pendant la journée de bourse
+
+Low –\>Le prix le plus bas atteint par l'action pendant la journée de bourse
+
+Close –\> le prix de l'action à la clôture de la journée de bourse
+
+adj Close –\>Le prix de clôture ajusté de l'action, qui prend en compte des facteurs tels que les fractionnements d'actions et les dividendes
+
+Volume –\> Le nombre total d'actions de la société négociées ce jour-là
+
+## Objectif:
+
+Analyser l'historique des cours boursiers de Samsung afin de comprendre ses variations de prix, ses tendances et ses modèles potentiels. Cette analyse peut être utile pour plusieurs raisons :
+
+1.  Comprendre l'évolution historique des prix
+
+2.  Évaluer les mouvements de prix futurs
+
+3.  Explorer les relations entre les variables
+
+## Lecture du fichier
+
+lecture et "nettoyage"
+
+**ce code nettoie et prétraite le jeu de données Samsung avant de générer un résumé de ses caractéristiques.**
+
+```{r}
+
+df <- read.csv("D:/oussema/TP_info/IGL3/R/test/samsung_dataset.csv", sep = ";")
+df$Adj.Close <- as.numeric(gsub(",",".", df$Adj.Close))
+df$Date <- as.Date(df$Date, format = "%d/%m/%Y")
+data <- na.omit(data)
+
+summary(df)
+```
+
+## Analyse
+
+### Time series
+
+La série temporelle des prix de clôture permet Inspecter visuellement la tendance des prix de clôture sur une période de temps significative, et va nous servir dans le reste d'analyse . On a opté pour cette méthode vu la nature des données le prix de clôture intrinsèquement liées au temps. Chaque prix de clôture est enregistré à un moment précis et représente la valeur de l'action à cet instant. L'analyse en série temporelle permet de capturer cette dimension temporelle et de prendre en compte l'évolution des prix au fil du temps.
+
+close
+
+```{r}
+library(ggplot2)
+ts_data <- ts(df$Close,start =c(2000,01,11), end =c(2024,01,27), frequency = 234)
+plot(ts_data)
+
+```
+
+**Analyse**
+
+graphe fourni est un graphique de séries temporelles, un diagramme statistique qui affiche des points de données à des intervalles de temps successifs. Voici une analyse détaillée basée sur les éléments visibles :
+
+1.  **Échelle temporelle (axe des abscisses)** : L'axe horizontal représente le temps, s'étendant de l'année 2000 à un peu après 2020 (janvier 2024). Cela indique que les données couvrent une période d'environ deux décennies.
+
+2.  **Valeurs des données (axe des ordonnées)** : L'axe vertical est intitulé "ts_data" et les valeurs vont de 0 à un peu plus de 8e+10. La notation "e+10" est une forme de notation scientifique, où "8e+10" est équivalent à 8 × 10\^10. Cela suggère que les valeurs des données sont assez grandes, de l'ordre des dizaines de milliards.
+
+3.  **Tendance des données** : Les données commencent à une valeur relativement basse vers l'année 2000 et restent assez stables avec des fluctuations mineures jusqu'à environ 2010. Après 2010, on observe une tendance haussière significative, les valeurs augmentant rapidement jusqu'à atteindre un pic vers 2023. Après le pic, il semble y avoir une légère baisse ou correction.
+
+4.  **Style du graphique** : Le graphique est un simple tracé linéaire avec une ligne noire représentant les points de données connectés dans l'ordre chronologique. Il n'y a pas de quadrillage ni de marqueurs supplémentaires, ce qui en fait un design minimaliste centré sur la tendance des données.
+
+5.  **Interprétations**
+
+La hausse rapide après 2010 suggère une période de croissance ou d'expansion de ce qui est mesuré.Cette hausse peut être attribué à plusieurs facteurs : **Expansion du marché des smartphones et de la technologie(**La période post-2010 a été marquée par une adoption massive des smartphones dans le monde entier,),**Innovations technologiques(**Samsung a introduit de nombreuses innovations technologiques dans ses produits, telles que des écrans OLED, des caméras améliorées) de plus l'**Expansion géographique** .
+
+Baisse ou correction post 2023: cela dû à **la saturation du marché ,** **Concurrence accrue ,Changements économiques mondiaux**
+
+### Composante saisonière
+
+**Objectif**: Décomposer la série chronologique des prix de clôture en composantes de tendance, saisonnière et résiduelle pour identifier tout modèle récurrent ou toute saisonnalité dans les données de prix.
+
+**Pourquoi** : Les facteurs saisonniers peuvent avoir un impact significatif sur les cours boursiers, et la compréhension de ces modèles peut être utile pour prévoir ou expliquer les variations de prix. **Avantages de la visualisation choisie:**
+
+Ce choix de visualisation offre plusieurs avantages pour analyser la composante saisonnière des prix des actions Samsung :
+
+-   **Représentation claire des variations saisonnières:** Le graphique permet de visualiser clairement les tendances cycliques des prix et d'identifier les périodes de l'année où les prix sont généralement plus élevés ou plus bas.
+
+-   **Comparaison avec la tendance et les résidus:** L'utilisation de la fonction `decompose` permet de comparer la composante saisonnière aux autres composantes (tendance, résiduelle) et de comprendre leur influence relative sur les prix des actions.
+
+-   **Facilité d'interprétation:** Le graphique est simple à comprendre, même pour ceux qui n'ont pas une grande expérience de l'analyse de séries temporelles.
+
+#### 
+
+```{r}
+library(forecast)
+seasonal_decomposition <- decompose(ts_data)
+# Extraire la composante saisonnière
+seasonal_component <- seasonal_decomposition$seasonal
+# Ajuster les marges de la figure
+par(mar = c(5, 4, 4, 2) + 0.1)
+# Utiliser autoplot pour afficher la composante saisonnière
+autoplot(seasonal_decomposition, series = "seasonal") +
+  labs(x = "Date", y = "Composante Saisonnière", title = "Composante Saisonnière des Prix des Actions de Samsung")
+```
+
+#### **Analyse du Graphique**
+
+Le graphique est un tracé de décomposition de série chronologique, montrant les différents composants extraits d'un ensemble de données qui semble représenter les prix des actions d'une entreprise appelée "SamSung". Le titre du graphique est en français et se traduit par "Composante Saisonnière des Prix des Actions de SamSung". Le graphique est divisé en trois panneaux, chacun représentant un composant différent de l'analyse de la série chronologique :
+
+1.  **Panneau Supérieur - Données :** Il montre les données originales, qui sont le prix de l'action au fil du temps. Les données commencent autour de l'année 2000 et se poursuivent jusqu'à janvier 2024. Il y a une tendance à la hausse claire, indiquant que le prix de l'action a augmenté au fil du temps.
+
+2.  **Panneau du Milieu - Tendance :** Ce panneau isole le composant de tendance des données de la série chronologique. La tendance montre une augmentation relativement lisse au fil du temps, ignorant les fluctuations à court terme. Cela suggère une augmentation générale à long terme du prix de l'action, avec certaines périodes de croissance plus rapide et d'autres de croissance plus lente ou de plateaux.
+
+3.  **Panneau Inférieur - Saisonnier et Reste :** Le composant saisonnier montrerait généralement des motifs réguliers qui se répètent sur une période fixe, comme trimestrielle ou annuelle. Cependant, dans ce graphique, le composant saisonnier n'est pas immédiatement apparent, ce qui pourrait suggérer que les fluctuations saisonnières du prix de l'action ne sont pas significatives ou que les données n'ont pas un fort motif saisonnier. Sous le composant saisonnier, il y a un composant "reste", qui représente les résidus de la série chronologique après que les composants de tendance et saisonniers ont été retirés. Cela inclurait toutes les fluctuations irrégulières ou aléatoires qui ne peuvent pas être attribuées à la tendance ou à la saisonnalité.
+
+L'axe des y des deux premiers panneaux semble être échelonné en notation scientifique (par exemple, 2e+10), ce qui indique que les valeurs sont de l'ordre des milliards. L'axe des y du panneau inférieur est également en notation scientifique mais avec des valeurs beaucoup plus petites, suggérant que ce sont les écarts par rapport aux composants de tendance et saisonniers.
+
+En somme, le graphique est utile pour comprendre les motifs sous-jacents dans les données sur les prix des actions, en séparant les tendances à long terme des effets saisonniers et des fluctuations irrégulières.
+
+Interprétation : ces résultats peuvent être expliqué par la croissance de l'entreprise progressive et par le faite que le concurrent majeur de Samsung (Nokia) a perdu sa fiabilité.Ce qui rendre Samsung le meilleur dans le marché.L'**Absence de motif saisonnier apparent** L'industrie dans laquelle Samsung opère peut ne pas être fortement influencée par des fluctuations saisonnières. Par exemple, contrairement à certaines industries comme le commerce de détail ou l'agriculture, les ventes de produits technologiques peuvent être relativement constantes tout au long de l'année .La demande de la nouvelle technologie ne dépend pas de la saison.
+
+### relation entre volume et close
+
+**Objectif:** Explorer la relation entre le volume des transactions quotidiennes et le prix de clôture de l'action**.**
+
+-   **Lien avec l'objectif global:**
+
+-   Identifier des tendances potentielles du prix de l'action en fonction du volume des transactions.
+
+-   Déterminer si les volumes élevés s'accompagnent généralement de mouvements de prix plus importants (relation positive) ou si le volume n'a pas d'impact significatif sur le prix (relation faible ou négative).
+
+-   Anticiper les mouvements de prix futurs en analysant les volumes de transactions et les tendances du marché.
+
+```{r}
+ggplot(df, aes(x = Volume, y = Close)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +  # Ajouter une ligne de régression linéaire
+  labs(title = "Relation entre le Volume et le Prix de l'Action",
+       x = "Volume", y = "Prix de Clôture") +
+  theme_minimal()
+```
+
+**Interprétation du Graphique**
+
+Le graphique fourni est un nuage de points qui illustre la relation entre le volume des échanges d'une action et son prix de clôture. Le titre du graphique est "Relation entre le Volume et le Prix de l'Action".
+
+**Axes du Graphique**
+
+Sur l'axe horizontal (x), nous avons le "Volume" des actions échangées, et sur l'axe vertical (y), nous avons le "Prix de Clôture" de l'action. Les points bleus représentent les données individuelles pour chaque période ou transaction observée.
+
+**Ligne de Tendance et Dispersion des Points**
+
+Une ligne de tendance rouge est tracée à travers les points. Cette ligne montre une tendance générale à la baisse, ce qui suggère qu'à mesure que le volume des échanges augmente, le prix de clôture de l'action a tendance à diminuer. Cependant, la dispersion des points est assez large, ce qui indique une variabilité significative et que d'autres facteurs pourraient influencer le prix de l'action en plus du volume des échanges.
+
+**Concentration des Données**
+
+La plupart des données se concentrent dans les gammes inférieures de volume, avec quelques points s'étendant vers des volumes plus élevés. La concentration des points dans les gammes inférieures de volume pourrait indiquer que les prix de clôture varient moins avec les petits volumes, tandis que les données plus dispersées à des volumes plus élevés pourraient indiquer une plus grande volatilité du prix à ces niveaux.
+
+**Interprétation**
+
+Ce résultat peut être expliqué par le fait que Samsung est sujet à des rumeurs selon lesquelles leur PDG serait un voleur.Aussi ceci est expliqué par la crise mondiale.
+
+### relation entre open et close
+
+Questions adressées : Y a-t-il une relation entre les prix d'ouverture et de clôture ? L'image fournie est un nuage de points intitulé "Relation entre Open et Close", ce qui signifie littéralement "Relation entre Ouverture et Clôture" en français. Ce titre suggère que le graphique représente des données financières, les prix d'ouverture et de clôture d'une action au cours d'une séance de bourse.
+
+```{r}
+ggplot(df, aes(x = Open, y = Close)) + geom_point(color = "blue") + geom_smooth(method = "lm", se = FALSE, color = "red") + labs(title = "Relation entre Open et Close", x = "Open", y = "Close") + theme_minimal()
+```
+
+Le choix d'un nuage de points avec une ligne de régression linéaire est justifié pour plusieurs raisons :
+
+-   **Pertinence pour l'analyse de la relation:** Cette combinaison de visualisations correspond bien à l'objectif d'analyser la relation entre deux variables continues, comme les prix d'ouverture et de clôture.
+
+-   **Révélation de tendances et de schémas:** Le nuage de points permet de visualiser des tendances et des schémas potentiels dans la relation entre les variables, tandis que la ligne de régression linéaire quantifie la tendance globale.
+
+-   **Facilité d'interprétation:** La combinaison du nuage de points et de la ligne de régression est intuitive et facile à interpréter, même pour un public non expert.
+
+#### **Détails du graphique**
+
+L'axe des abscisses (axe horizontal) du graphique est intitulé "Open" (Ouverture) et l'axe des ordonnées (axe vertical) est intitulé "Close" (Clôture), tous deux représentant probablement une valeur monétaire . Les points de données sont représentés par des points bleus, et une ligne rouge semble être une droite d'ajustement. Cette ligne indique une forte relation linéaire entre les valeurs d'ouverture et de clôture.
+
+Les valeurs sur les deux axes vont de 0 à environ 8 x 10\^10. Cela pourrait représenter une unité monétaire .
+
+#### **Interprétation**
+
+La linéarité des points de données suggère une corrélation élevée entre les valeurs d'ouverture et de clôture. En d'autres termes, lorsque la valeur d'ouverture augmente, la valeur de clôture a également tendance à augmenter, et vice versa.Ce résultat peut être expliquer par **Tendance à suivre la tendance** Si le prix d'ouverture est élevé, cela peut créer un sentiment de marché haussier, incitant les investisseurs à acheter l'action, ce qui peut faire grimper le prix de clôture .On peut citer aussi L'**Effet d'inertie :** Les investisseurs peuvent avoir tendance à maintenir leurs positions existantes, ce qui signifie que si le prix d'ouverture est élevé, ils sont moins susceptibles de vendre et plus susceptibles de conserver leurs actions, soutenant ainsi le prix jusqu'à la clôture.De plus selon les récentes statistiques les informations matinales ont un effet trés efficace ;Des nouvelles ou des informations positives publiées avant l'ouverture du marché peuvent avoir un impact positif sur le prix d'ouverture et se maintenir jusqu'à la clôture
+
+### volume d'échanges quotidiens
+
+**Objectif:** Examiner les périodes d'activité de trading élevée et identifier les facteurs qui les influencent.
+
+Explorer la relation entre le volume des transactions quotidiennes et le prix de clôture de l'action.
+
+-   **Lien avec l'objectif global:**
+
+-   Évaluer l'intérêt des investisseurs pour l'action et son évolution dans le temps.
+
+-   Identifier des changements de tendance ou des événements importants qui pourraient affecter le prix de l'action.
+
+-   Comprendre les facteurs qui déclenchent des volumes de transactions élevés
+
+```{r}
+daily_volume <- df$Volume
+high_activity_days <- df$Date[daily_volume > quantile(daily_volume, 0.95)]  # Par exemple, considérons les jours avec les 5% des volumes les plus élevés comme des périodes de forte activité
+ggplot(df, aes(x = Date, y = Volume, fill = factor(Volume > quantile(Volume, 0.95)))) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("FALSE" = "skyblue", "TRUE" = "red")) +  # Define colors for high activity days
+  # Highlight high activity days
+  labs(title = "Volumes d'Échanges Quotidiens",
+       x = "Date", y = "Volume") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+```
+
+-   **Graphique à barres pour représenter le volume:**
+
+-   Un graphique à barres est une représentation appropriée pour visualiser des données quantitatives discrètes, comme le volume d'échange quotidien.
+
+-   Il permet de comparer facilement les volumes d'échange d'un jour à l'autre.
+
+-   L'utilisation de barres empilées permet de superposer les volumes d'échange et de distinguer les jours d'activité élevée.
+
+## Analyse de la Courbe
+
+L'image fournie montre un graphique à barres intitulé "Volumes d'Échanges Quotidiens". Il représente le volume d'échanges sur une période allant de l'année 2000 à Janvier 2024.
+
+Le graphique est un diagramme à barres où chaque barre représente le volume d'échanges pour une période donnée (un jour). Les barres sont colorées en deux nuances : bleu et rouge. La légende indique que la couleur rouge représente les jours où le volume d'échanges est supérieur au 95ème percentile des volumes (indiqué par la formule factor(Volume \> quantile(Volume, 0.95))). Cela signifie que ce sont des jours où le volume d'échanges était exceptionnellement élevé. Les barres bleues représentent les jours où le volume d'échanges était inférieur à ce seuil.
+
+**Observations**
+
+À partir du graphique, on peut observer que les volumes d'échanges élevés (barres rouges) sont plus fréquents au début de la période représentée, en particulier autour de l'année 2000, et semblent devenir moins fréquents au fil du temps. Cela pourrait indiquer une période de volatilité ou d'activité intense du marché à cette époque, qui s'est stabilisée ou réduite dans les années suivantes
+
+**Interpréation** : Cela peut être expliquer par les fabriquations de certains produits avec des problémes citer l'exemple Samsung Galaxy Note 7 en 2016. Ce produit a été confronté à de graves problèmes de sécurité liés à des batteries défectueuses, ce qui a entraîné plusieurs incidents d'incendie et même d'explosions. En raison de ces problèmes, Samsung a été contraint de rappeler tous les Galaxy Note 7 vendus et d'arrêter la production de ce modèle.Ceci aussi peut être expliquer par la maturité du marché Au fil du temps, les marchés boursiers peuvent avoir atteint un stade de maturation où la volatilité et l'activité commerciale se stabilisent.
+
+## forecasting
+
+Justification du choix du modéle :On a apté pour Arima car il nous donne des résultat claires et correctes . On a essayé avec Guarch aussi mais il nous a donné des erreurs.
+
+### Arima model
+
+```{r}
+arima_model <- auto.arima(ts_data)
+summary(arima_model)
+```
+
+### arima residuals
+
+```{r}
+arima_resid <- residuals(arima_model)
+autoplot(arima_resid, main = "Résidus du modèle ARIMA") +
+  theme_minimal()
+```
+
+**Analyse de la courbe**
+
+L'image fournie est un graphique intitulé "Résidus du modèle ARIMA". ARIMA signifie AutoRegressive Integrated Moving Average, qui est une classe de modèles statistiques utilisés pour analyser et prévoir des données de séries temporelles.
+
+Le graphique montre les résidus, qui sont les différences entre les valeurs observées et les valeurs prédites par le modèle, au fil du temps. L'axe horizontal représente le temps, s'étendant de l'année 2000 à 2024(janvier), tandis que l'axe vertical représente l'ampleur des résidus, étiquetés comme "arima_resid".
+
+#### Interprétation des résidus
+
+Les résidus est centrés autour de zéro, ce qui est généralement un bon signe dans de tels modèles, indiquant que le modèle ne sur-estime ni ne sous-estime systématiquement. Cependant, on observe une augmentation notable de la variabilité des résidus autour de 2020, où les pics deviennent plus grands. Cela pourrait indiquer une période de plus grande volatilité dans les données ou un changement dans le processus sous-jacent que le modèle ARIMA n'a pas capturé, peut-être en raison d'un événement extraordinaire ou d'un changement dans le processus de génération des données.
+
+Ce résultat peut être expliqué par **Pandémie de COVID-19** La pandémie de COVID-19, qui a commencé à se propager à l'échelle mondiale à partir de fin 2019, a entraîné des perturbations massives dans l'économie mondiale.**La crise Mondiale :** Les mesures de confinement et les restrictions de déplacement ont entraîné une contraction économique mondiale, ce qui a eu un impact sur les marchés financiers et les activités commerciales.Ainsi les **tensions géopolitiques :** Les tensions géopolitiques croissantes entre les grandes puissances mondiales, telles que les États-Unis, la Chine et la Russie, ainsi que les conflits régionaux dans des zones comme le Moyen-Orient, peuvent avoir contribué à l'incertitude et à la volatilité sur les marchés financiers.
+
+### forecasting
+
+```{r}
+arima_forecast <- forecast(arima_model, h = 300)
+autoplot(arima_forecast)
+
+```
+
+L'image fournie semble être un graphique de série temporelle avec des prévisions provenant d'un modèle ARIMA. ARIMA signifie AutoRegressive Integrated Moving Average, qui est une méthode statistique populaire pour la prévision de séries temporelles. La notation ARIMA(0,1,0) avec dérive indique le type spécifique de modèle ARIMA utilisé :
+
+-   Le premier nombre (0) représente la partie AR (AutoRegressive), indiquant que le modèle n'utilise pas les valeurs passées de la série pour les prédictions (c'est-à-dire qu'il n'y a pas de termes AR).
+-   Le deuxième nombre (1) représente la partie I (Integrated), suggérant que les données ont été différenciées une fois pour les rendre stationnaires.
+-   Le troisième nombre (0) représente la partie MA (Moving Average), indiquant que le modèle n'utilise pas les erreurs de prévision passées pour les prédictions (c'est-à-dire qu'il n'y a pas de termes MA).
+-   "Avec dérive" signifie qu'un terme constant (ou dérive) est inclus dans le modèle, qui capture une tendance linéaire au fil du temps.
+
+Le graphique montre des données historiques de séries temporelles, qui sont représentées par la ligne noire, et s'étend de l'année 2000 à un peu au-delà de 2020(janvier 2024). La zone ombrée en bleu représente les valeurs prévues ainsi que l'intervalle de confiance, qui suggère la plage dans laquelle les valeurs futures sont censées se situer avec une certaine probabilité.
+
+#### Tendance et prévisions
+
+Les données historiques montrent une tendance globale à la hausse au fil du temps. La prévision suggère que cette tendance à la hausse devrait se poursuivre, mais avec une certaine incertitude, comme l'indique l'élargissement de l'intervalle de confiance dans le futur (la zone ombrée). L'intervalle de confiance suggère que bien que le modèle soit assez certain de la tendance à court terme, sa certitude diminue lorsqu'il projette plus loin dans le futur.
+
+#### Axes du graphique
+
+L'axe des y est étiqueté "ts_data", " série temporelle", L'axe des x représente le temps, mesuré en années.
+
+Ce résultat peu être expliquer par **Développements technologiques :** Les avancées technologiques rapides et les innovations disruptives peuvent modifier les dynamiques économiques et industrielles, ce qui peut affecter les performances des entreprises et les tendances des séries temporelles.
+
+### Conclusion
+
+En résumé, cette analyse nous a permis d'acquérir une meilleure compréhension des tendances du marché des actions de Samsung et de fournir des informations précieuses pour prendre des décisions d'investissement éclairées. Il est crucial de souligner que les marchés financiers sont complexes et en constante évolution, ce qui nécessite une analyse continue et des ajustements stratégiques pour naviguer avec succès dans ce paysage dynamique
